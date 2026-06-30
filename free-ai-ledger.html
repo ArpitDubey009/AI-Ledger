@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Free AI Ledger</title>
+<style>
+  :root{
+    --paper:#f1ece0;
+    --paper-dark:#e7e0cd;
+    --card-bg:#fffdf7;
+    --ink:#211f1a;
+    --ink-soft:#6b6557;
+    --line:#d9d0b4;
+    --accent:#c2461f;
+    --accent-2:#1f6f5c;
+    --accent-soft:#c2461f14;
+    --tag-bg:#211f1a;
+    --tag-text:#f1ece0;
+    --shadow: 0 1px 2px rgba(33,31,26,.04), 0 8px 24px rgba(33,31,26,.06);
+    --shadow-hover: 0 4px 10px rgba(33,31,26,.08), 0 20px 40px rgba(33,31,26,.12);
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:'Iowan Old Style','Palatino Linotype',Georgia,serif;
+    line-height:1.55; overflow-x:hidden;
+  }
+  ::selection{ background:var(--accent); color:var(--paper); }
+
+  .grain{
+    position:fixed; inset:0; pointer-events:none; opacity:.045; mix-blend-mode:multiply; z-index:60;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .ribbon{
+    height:6px; width:100%;
+    background:repeating-linear-gradient(90deg, var(--accent) 0 24px, var(--accent-2) 24px 48px);
+  }
+
+  .hero{
+    position:relative; max-width:1040px; margin:0 auto; padding:90px 28px 60px;
+    overflow:hidden;
+  }
+  .hero::before{
+    content:""; position:absolute; top:-160px; right:-160px; width:420px; height:420px; border-radius:50%;
+    background:radial-gradient(circle at 30% 30%, var(--accent), transparent 70%); opacity:.16; z-index:0;
+  }
+  .hero::after{
+    content:""; position:absolute; bottom:-200px; left:-120px; width:360px; height:360px; border-radius:50%;
+    background:radial-gradient(circle at 30% 30%, var(--accent-2), transparent 70%); opacity:.14; z-index:0;
+  }
+  .hero-inner{ position:relative; z-index:1; }
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:8px;
+    font-family:'Courier New',monospace; font-size:11px; letter-spacing:.2em; text-transform:uppercase;
+    color:var(--accent); margin-bottom:22px; padding:6px 14px; border:1px solid var(--accent); border-radius:30px;
+    opacity:0; animation:fadeUp .7s ease forwards;
+  }
+  .eyebrow::before{ content:"●"; font-size:7px; }
+  h1{
+    font-size:clamp(2.8rem,7vw,4.6rem); margin:0 0 18px; font-weight:400; letter-spacing:-0.015em; line-height:1.02;
+    opacity:0; animation:fadeUp .8s ease .1s forwards;
+  }
+  h1 .line2{ display:block; }
+  h1 em{
+    font-style:italic; background:linear-gradient(100deg, var(--accent), var(--accent-2));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .sub{
+    max-width:560px; color:var(--ink-soft); font-size:18px; margin:0 0 36px;
+    opacity:0; animation:fadeUp .8s ease .2s forwards;
+  }
+  .stats{
+    display:flex; gap:0; flex-wrap:wrap; border:1px solid var(--line); border-radius:14px; background:var(--card-bg);
+    box-shadow:var(--shadow); overflow:hidden;
+    opacity:0; animation:fadeUp .8s ease .3s forwards;
+  }
+  .stat{ flex:1; min-width:140px; padding:20px 24px; border-right:1px solid var(--line); }
+  .stat:last-child{ border-right:none; }
+  .stat b{
+    display:block; font-size:28px; color:var(--ink); font-family:'Iowan Old Style',Georgia,serif; line-height:1;
+    margin-bottom:6px;
+  }
+  .stat span{ font-family:'Courier New',monospace; font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-soft); }
+
+  @keyframes fadeUp{ from{ opacity:0; transform:translateY(14px); } to{ opacity:1; transform:translateY(0); } }
+
+  .controls{
+    max-width:1040px; margin:0 auto; padding:18px 28px; position:sticky; top:0; z-index:20;
+    background:rgba(241,236,224,.92); backdrop-filter:blur(8px); border-bottom:1px solid var(--line);
+  }
+  .search-wrap{ position:relative; }
+  .search-wrap svg{ position:absolute; left:16px; top:50%; transform:translateY(-50%); opacity:.5; }
+  #search{
+    width:100%; padding:14px 16px 14px 44px; font-size:16px; font-family:inherit; background:var(--card-bg);
+    border:1px solid var(--line); border-radius:30px; color:var(--ink); outline:none; box-shadow:var(--shadow);
+    transition:border-color .2s ease, box-shadow .2s ease;
+  }
+  #search:focus{ border-color:var(--accent); box-shadow:0 0 0 4px var(--accent-soft); }
+  .tags{ display:flex; gap:8px; flex-wrap:wrap; margin-top:14px; }
+  .tag-btn{
+    font-family:'Courier New',monospace; font-size:11px; letter-spacing:.04em; text-transform:uppercase;
+    padding:8px 14px; border:1px solid var(--line); background:var(--card-bg); color:var(--ink-soft);
+    border-radius:20px; cursor:pointer; transition:all .18s ease;
+  }
+  .tag-btn:hover{ border-color:var(--accent); color:var(--accent); transform:translateY(-1px); }
+  .tag-btn.active{ background:var(--tag-bg); color:var(--tag-text); border-color:var(--tag-bg); }
+
+  main{ max-width:1040px; margin:0 auto; padding:10px 28px 100px; }
+  section.category{
+    margin-top:60px; opacity:0; transform:translateY(18px); transition:opacity .6s ease, transform .6s ease;
+  }
+  section.category.in-view{ opacity:1; transform:translateY(0); }
+
+  .cat-head{ display:flex; align-items:baseline; gap:16px; margin-bottom:6px; }
+  .cat-head h2{
+    font-size:1.7rem; margin:0; font-weight:400; position:relative; padding-bottom:10px;
+  }
+  .cat-head h2::after{
+    content:""; position:absolute; left:0; bottom:0; width:46px; height:3px;
+    background:linear-gradient(90deg, var(--accent), var(--accent-2)); border-radius:3px;
+  }
+  .cat-count{
+    font-family:'Courier New',monospace; font-size:11px; color:var(--ink-soft);
+    border:1px solid var(--line); padding:3px 10px; border-radius:20px; align-self:flex-start;
+  }
+  .cat-desc{ color:var(--ink-soft); font-size:14.5px; margin:14px 0 24px; max-width:600px; }
+
+  .grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(280px,1fr)); gap:16px; }
+  .card{
+    background:var(--card-bg); border:1px solid var(--line); border-radius:16px; padding:22px;
+    box-shadow:var(--shadow); transition:transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+    display:flex; flex-direction:column; gap:10px; position:relative; overflow:hidden;
+  }
+  .card::before{
+    content:""; position:absolute; top:0; left:0; width:4px; height:100%;
+    background:linear-gradient(180deg, var(--accent), var(--accent-2)); opacity:0; transition:opacity .25s ease;
+  }
+  .card:hover{ transform:translateY(-5px); box-shadow:var(--shadow-hover); border-color:transparent; }
+  .card:hover::before{ opacity:1; }
+
+  .card-top{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+  .card-name a{
+    color:var(--ink); text-decoration:none; font-size:1.15rem; border-bottom:1px solid transparent;
+    transition:border-color .2s ease, color .2s ease;
+  }
+  .card-name a:hover{ color:var(--accent); border-color:var(--accent); }
+  .badge{
+    font-family:'Courier New',monospace; font-size:9.5px; letter-spacing:.05em; text-transform:uppercase;
+    color:var(--accent-2); background:#1f6f5c14; padding:4px 9px; border-radius:20px; white-space:nowrap; flex-shrink:0;
+  }
+  .card-desc{ color:var(--ink-soft); font-size:13.5px; flex-grow:1; }
+  .card-link{
+    font-family:'Courier New',monospace; font-size:11px; letter-spacing:.04em; color:var(--ink);
+    display:inline-flex; align-items:center; gap:6px; text-decoration:none; margin-top:4px; align-self:flex-start;
+    border-bottom:1px solid var(--ink); padding-bottom:2px; transition:gap .2s ease, color .2s ease, border-color .2s ease;
+  }
+  .card-link:hover{ gap:10px; color:var(--accent); border-color:var(--accent); }
+
+  .empty{ text-align:center; padding:100px 20px; color:var(--ink-soft); font-style:italic; display:none; font-size:18px; }
+
+  footer{
+    max-width:1040px; margin:0 auto; padding:40px 28px 80px; color:var(--ink-soft); font-size:12px;
+    font-family:'Courier New',monospace; border-top:1px solid var(--line); display:flex; justify-content:space-between;
+    flex-wrap:wrap; gap:10px;
+  }
+
+  @media (max-width:600px){
+    .stats{ flex-direction:column; }
+    .stat{ border-right:none; border-bottom:1px solid var(--line); }
+    .stat:last-child{ border-bottom:none; }
+    .grid{ grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="grain"></div>
+<div class="ribbon"></div>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="eyebrow">An index, not an endorsement</div>
+    <h1>The Free<span class="line2"><em>AI</em> Ledger</span></h1>
+    <p class="sub">A running catalog of AI tools with a genuinely usable free tier — sorted by what they do, not how loud they market it.</p>
+    <div class="stats">
+      <div class="stat"><b id="totalCount">0</b><span>Tools indexed</span></div>
+      <div class="stat"><b id="catCount">0</b><span>Categories</span></div>
+      <div class="stat"><b>$0</b><span>Required to start</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="controls">
+  <div class="search-wrap">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input id="search" type="text" placeholder="Search by name, task, or category…" autocomplete="off">
+  </div>
+  <div class="tags" id="tagBar"></div>
+</div>
+
+<main id="main"></main>
+
+<p class="empty" id="emptyState">No entries match that search. Try a broader term.</p>
+
+<footer>
+  <span>Compiled for personal/indie use.</span>
+  <span>Free tiers change — verify before relying on one for production.</span>
+</footer>
+
+<script>
+const DATA = [
+  {
+    cat: "Chat & Assistants",
+    desc: "General-purpose conversational AI for writing, research, and reasoning.",
+    items: [
+      { name: "Claude", url: "https://claude.ai", free: "Free tier", desc: "Strong reasoning, long context, good for writing and analysis." },
+      { name: "ChatGPT", url: "https://chat.openai.com", free: "Free tier", desc: "General assistant with broad plugin/tool ecosystem." },
+      { name: "Gemini", url: "https://gemini.google.com", free: "Free tier", desc: "Google's assistant, integrates with Docs, Gmail, Sheets." },
+      { name: "Perplexity", url: "https://perplexity.ai", free: "Free tier", desc: "Search-first assistant with cited sources for every answer." }
+    ]
+  },
+  {
+    cat: "Image Generation",
+    desc: "Text-to-image tools with workable free credits or unlimited basic tiers.",
+    items: [
+      { name: "Leonardo AI", url: "https://leonardo.ai", free: "Daily credits", desc: "High-quality image generation with fine-tuned style models." },
+      { name: "Bing Image Creator", url: "https://www.bing.com/images/create", free: "Free, daily limit", desc: "DALL·E-powered generation built into Bing, no signup cost." },
+      { name: "Playground AI", url: "https://playground.com", free: "Daily credits", desc: "Easy canvas-style editor for generating and remixing images." },
+      { name: "Stable Diffusion (HF)", url: "https://huggingface.co/spaces", free: "Open-source", desc: "Run community-hosted Stable Diffusion spaces at no cost." }
+    ]
+  },
+  {
+    cat: "Writing & Editing",
+    desc: "Tools focused on grammar, tone, and long-form drafting.",
+    items: [
+      { name: "Grammarly", url: "https://grammarly.com", free: "Free tier", desc: "Grammar, clarity, and tone checking across most apps and browsers." },
+      { name: "QuillBot", url: "https://quillbot.com", free: "Free tier", desc: "Paraphrasing, grammar check, and summarizer in one toolkit." },
+      { name: "Sudowrite", url: "https://sudowrite.com", free: "Trial credits", desc: "Fiction-focused writing assistant for plot and prose help." }
+    ]
+  },
+  {
+    cat: "Code & Development",
+    desc: "Coding copilots and agentic tools with free usage allowances.",
+    items: [
+      { name: "GitHub Copilot", url: "https://github.com/features/copilot", free: "Free for individuals", desc: "In-editor code completion and chat, free plan available." },
+      { name: "Claude Code", url: "https://claude.ai/code", free: "Included in plans", desc: "Command-line agent for multi-file coding tasks." },
+      { name: "Replit AI", url: "https://replit.com", free: "Free tier", desc: "Browser-based IDE with AI code generation and hosting." },
+      { name: "Amazon Q Developer", url: "https://aws.amazon.com/q/developer", free: "Free for individuals", desc: "AWS's code suggestion tool, integrates with major editors." }
+    ]
+  },
+  {
+    cat: "Video & Audio",
+    desc: "Generation and editing tools for voice, music, and video.",
+    items: [
+      { name: "ElevenLabs", url: "https://elevenlabs.io", free: "Monthly credits", desc: "Realistic text-to-speech and voice cloning." },
+      { name: "Suno", url: "https://suno.com", free: "Daily credits", desc: "Generate full songs with vocals from a text prompt." },
+      { name: "CapCut", url: "https://capcut.com", free: "Free, AI features", desc: "Video editor with AI captioning, background removal, and more." },
+      { name: "Runway Gen-2", url: "https://runwayml.com", free: "Trial credits", desc: "Text-to-video and video editing with AI-driven effects." }
+    ]
+  },
+  {
+    cat: "Productivity & Automation",
+    desc: "Tools that connect AI to your actual workflow rather than a chat box.",
+    items: [
+      { name: "n8n", url: "https://n8n.io", free: "Free self-hosted", desc: "Open-source workflow automation, free forever if self-hosted." },
+      { name: "Notion AI", url: "https://notion.so", free: "Limited trial", desc: "AI writing and summarization inside your existing Notion docs." },
+      { name: "Zapier", url: "https://zapier.com", free: "Free, capped tasks", desc: "No-code automation between apps with some AI-powered steps." }
+    ]
+  },
+  {
+    cat: "Research & Knowledge",
+    desc: "Tools built for digging through papers, data, and long documents.",
+    items: [
+      { name: "NotebookLM", url: "https://notebooklm.google.com", free: "Free", desc: "Upload documents and get a grounded assistant that cites your sources." },
+      { name: "Elicit", url: "https://elicit.com", free: "Free tier", desc: "AI-assisted literature review and research paper summarization." },
+      { name: "Consensus", url: "https://consensus.app", free: "Free tier", desc: "Search engine that surfaces findings directly from scientific papers." }
+    ]
+  },
+  {
+    cat: "Design & Presentation",
+    desc: "Visual design tools with meaningful free AI features.",
+    items: [
+      { name: "Canva Magic Studio", url: "https://canva.com", free: "Free tier", desc: "AI design assistant for slides, posts, and basic image editing." },
+      { name: "Gamma", url: "https://gamma.app", free: "Free credits", desc: "Turns a text outline into a formatted slide deck or doc instantly." },
+      { name: "Figma AI", url: "https://figma.com", free: "Free tier", desc: "Design tool with AI-assisted layout and content suggestions." }
+    ]
+  }
+];
+
+const main = document.getElementById('main');
+const tagBar = document.getElementById('tagBar');
+const search = document.getElementById('search');
+const emptyState = document.getElementById('emptyState');
+let activeTag = 'all';
+
+const arrow = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>';
+
+function render(){
+  const q = search.value.trim().toLowerCase();
+  let totalVisible = 0;
+  main.innerHTML = '';
+
+  DATA.forEach(group => {
+    if(activeTag !== 'all' && activeTag !== group.cat) return;
+    const matched = group.items.filter(item =>
+      !q || item.name.toLowerCase().includes(q) || item.desc.toLowerCase().includes(q) || group.cat.toLowerCase().includes(q)
+    );
+    if(matched.length === 0) return;
+    totalVisible += matched.length;
+
+    const section = document.createElement('section');
+    section.className = 'category';
+    section.innerHTML = `
+      <div class="cat-head">
+        <h2>${group.cat}</h2>
+        <span class="cat-count">${matched.length} entr${matched.length===1?'y':'ies'}</span>
+      </div>
+      <p class="cat-desc">${group.desc}</p>
+      <div class="grid"></div>
+    `;
+    const grid = section.querySelector('.grid');
+    matched.forEach(item => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <div class="card-top">
+          <div class="card-name"><a href="${item.url}" target="_blank" rel="noopener">${item.name}</a></div>
+          <span class="badge">${item.free}</span>
+        </div>
+        <div class="card-desc">${item.desc}</div>
+        <a class="card-link" href="${item.url}" target="_blank" rel="noopener">Visit site ${arrow}</a>
+      `;
+      grid.appendChild(card);
+    });
+    main.appendChild(section);
+  });
+
+  emptyState.style.display = totalVisible === 0 ? 'block' : 'none';
+  observeSections();
+}
+
+function buildTags(){
+  const allBtn = document.createElement('button');
+  allBtn.className = 'tag-btn active';
+  allBtn.textContent = 'All';
+  allBtn.onclick = () => setActive('all', allBtn);
+  tagBar.appendChild(allBtn);
+  DATA.forEach(group => {
+    const btn = document.createElement('button');
+    btn.className = 'tag-btn';
+    btn.textContent = group.cat;
+    btn.onclick = () => setActive(group.cat, btn);
+    tagBar.appendChild(btn);
+  });
+}
+
+function setActive(tag, btn){
+  activeTag = tag;
+  document.querySelectorAll('.tag-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+}
+
+const io = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('in-view'); });
+}, { threshold: 0.08 });
+
+function observeSections(){
+  document.querySelectorAll('section.category').forEach(s => io.observe(s));
+}
+
+search.addEventListener('input', render);
+document.getElementById('totalCount').textContent = DATA.reduce((a,g) => a + g.items.length, 0);
+document.getElementById('catCount').textContent = DATA.length;
+
+buildTags();
+render();
+</script>
+</body>
+</html>
